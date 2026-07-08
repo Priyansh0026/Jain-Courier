@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jain Courier Management System (JCMS)</title>
+  <meta name="description" content="A premium multi-courier scanner and manifest builder for franchise operations. Support webcam scans, USB scanner focus lock, and bulk loads.">
+  
+  <!-- Typography & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Chart.js for beautiful analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Html5-Qrcode for webcam scanning -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+
+  <!-- Synthetic Beep Sound Context Status -->
+  <div id="sound-status-bar" class="sound-toast">
+    <i data-lucide="volume-2"></i>
+    <span>Audio ready for scan feedback</span>
+  </div>
+
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo-icon">
+          <i data-lucide="package-check"></i>
+        </div>
+        <div>
+          <h1>Jain Courier</h1>
+          <span class="sub-brand">Management (JCMS)</span>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <button class="nav-btn active" data-tab="dashboard" id="btn-tab-dashboard">
+          <i data-lucide="layout-dashboard"></i>
+          <span>Dashboard</span>
+        </button>
+        <button class="nav-btn" data-tab="bulk-import" id="btn-tab-bulk">
+          <i data-lucide="file-text"></i>
+          <span>Bulk Import</span>
+        </button>
+        <button class="nav-btn" data-tab="manifests" id="btn-tab-manifests">
+          <i data-lucide="clipboard-list"></i>
+          <span>Manifest Generator</span>
+        </button>
+        <button class="nav-btn" data-tab="analytics" id="btn-tab-analytics">
+          <i data-lucide="bar-chart-3"></i>
+          <span>Analytics</span>
+        </button>
+        <button class="nav-btn" data-tab="manage-couriers" id="btn-tab-couriers">
+          <i data-lucide="settings"></i>
+          <span>Manage Couriers</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-card">
+          <div class="avatar" id="sidebar-avatar">VP</div>
+          <div class="user-info">
+            <span class="user-name" id="sidebar-username">Vikas Prasad</span>
+            <span class="user-role">Franchise Owner</span>
+          </div>
+        </div>
+        <button class="theme-toggle-btn" id="theme-toggle" aria-label="Toggle Theme">
+          <i data-lucide="moon" class="dark-icon"></i>
+          <i data-lucide="sun" class="light-icon hidden"></i>
+          <span>Dark Mode</span>
+        </button>
+        <button class="theme-toggle-btn" id="btn-logout" style="border-color: rgba(239, 68, 68, 0.2); color: var(--danger); background-color: rgba(239, 68, 68, 0.03);">
+          <i data-lucide="log-out"></i>
+          <span>Log Out</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Top Bar -->
+      <header class="top-bar">
+        <div class="header-title">
+          <h2 id="page-title">Operational Dashboard</h2>
+          <p class="subtitle" id="current-date">Tuesday, July 7, 2026</p>
+        </div>
+
+        <!-- Quick Stats Cards -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-icon blue">
+              <i data-lucide="package"></i>
+            </div>
+            <div class="stat-data">
+              <span class="stat-value" id="stat-total">0</span>
+              <span class="stat-label">Total Load</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon yellow">
+              <i data-lucide="scan"></i>
+            </div>
+            <div class="stat-data">
+              <span class="stat-value" id="stat-scanned">0</span>
+              <span class="stat-label">Scanned</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon purple">
+              <i data-lucide="file-check"></i>
+            </div>
+            <div class="stat-data">
+              <span class="stat-value" id="stat-manifested">0</span>
+              <span class="stat-label">Manifested</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon green">
+              <i data-lucide="truck"></i>
+            </div>
+            <div class="stat-data">
+              <span class="stat-value" id="stat-dispatched">0</span>
+              <span class="stat-label">Dispatched</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Tab Content Area -->
+      <div class="content-body">
+        
+        <!-- DASHBOARD TAB -->
+        <section id="tab-dashboard" class="tab-pane active">
+          <div class="grid-layout">
+            <!-- Left Panel: Scanner Center -->
+            <div class="card scan-center">
+              <div class="card-header">
+                <h3><i data-lucide="scan-line"></i> Scanner Intake</h3>
+                <div class="pill-selectors">
+                  <button class="pill-btn active" id="scanner-usb-mode">USB Gun</button>
+                  <button class="pill-btn" id="scanner-camera-mode">Webcam</button>
+                </div>
+              </div>
+
+              <!-- USB Scanner Input -->
+              <div id="usb-scanner-section" class="scanner-sub-pane active">
+                <div class="focus-notice" id="focus-banner">
+                  <div class="pulse-indicator"></div>
+                  <span>USB Scanner Active. Keep focus here to scan continuously.</span>
+                </div>
+
+                <div class="input-scanner-wrapper">
+                  <input type="text" id="barcode-input" placeholder="Scan Barcode / Enter Tracking ID..." autocomplete="off">
+                  <button class="input-clear-btn" id="clear-barcode-input" title="Clear">
+                    <i data-lucide="x"></i>
+                  </button>
+                </div>
+
+                <div class="manual-details-grid">
+                  <div class="form-group">
+                    <label for="manual-courier">Courier Partner</label>
+                    <select id="manual-courier">
+                      <option value="auto">🔍 Auto-Detect Courier</option>
+                      <option value="delhivery">Delhivery</option>
+                      <option value="dtdc">DTDC</option>
+                      <option value="bluedart">Blue Dart</option>
+                      <option value="speedpost">Speed Post</option>
+                      <option value="fedex">FedEx</option>
+                      <option value="dhl">DHL Express</option>
+                      <option value="other">Other / General</option>
+                    </select>
+                  </div>
+                  
+                  <div class="form-group">
+                    <label for="manual-weight">Weight (kg)</label>
+                    <input type="number" id="manual-weight" step="0.01" placeholder="0.00" min="0">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="manual-notes">Package Description / Notes</label>
+                  <input type="text" id="manual-notes" placeholder="e.g. Document pack, fragile electronics...">
+                </div>
+
+                <div class="scan-action-row">
+                  <button class="btn btn-primary" id="btn-submit-scan">
+                    <i data-lucide="plus"></i> Add Load
+                  </button>
+                  <button class="btn btn-secondary" id="btn-focus-lock">
+                    <i data-lucide="lock"></i> Lock Focus
+                  </button>
+                </div>
+              </div>
+
+              <!-- Webcam Camera Scanner -->
+              <div id="camera-scanner-section" class="scanner-sub-pane">
+                <div class="camera-wrapper">
+                  <div id="reader"></div>
+                  <div class="camera-placeholder" id="camera-placeholder">
+                    <i data-lucide="camera" class="camera-placeholder-icon"></i>
+                    <p>Start camera to scan tracking barcodes</p>
+                    <button class="btn btn-primary" id="btn-start-camera">
+                      <i data-lucide="play"></i> Start Camera
+                    </button>
+                  </div>
+                </div>
+                <div class="camera-controls hidden" id="camera-controls">
+                  <button class="btn btn-danger" id="btn-stop-camera">
+                    <i data-lucide="square"></i> Stop Camera
+                  </button>
+                  <div class="form-group inline-select">
+                    <label for="camera-select"><i data-lucide="video"></i></label>
+                    <select id="camera-select">
+                      <option value="">Loading cameras...</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Panel: Load Tracking List -->
+            <div class="card load-tracking-list">
+              <div class="card-header">
+                <h3><i data-lucide="list"></i> Live Load Log</h3>
+                <div class="header-actions">
+                  <button class="icon-btn" id="btn-export-csv" title="Export Current List to CSV">
+                    <i data-lucide="download"></i> Export CSV
+                  </button>
+                  <button class="btn btn-danger-outline btn-sm" id="btn-clear-all" title="Clear tracking history">
+                    <i data-lucide="trash-2"></i> Clear Log
+                  </button>
+                </div>
+              </div>
+
+              <div class="search-filter-row">
+                <div class="search-box">
+                  <i data-lucide="search"></i>
+                  <input type="text" id="search-load" placeholder="Search by tracking number...">
+                </div>
+                <select id="filter-courier">
+                  <option value="all">All Couriers</option>
+                  <option value="delhivery">Delhivery</option>
+                  <option value="dtdc">DTDC</option>
+                  <option value="bluedart">Blue Dart</option>
+                  <option value="speedpost">Speed Post</option>
+                  <option value="fedex">FedEx</option>
+                  <option value="dhl">DHL Express</option>
+                  <option value="other">Other</option>
+                </select>
+                <select id="filter-status">
+                  <option value="all">All Statuses</option>
+                  <option value="scanned">Scanned</option>
+                  <option value="manifested">Manifested</option>
+                  <option value="dispatched">Dispatched</option>
+                </select>
+              </div>
+
+              <div class="table-container">
+                <table id="load-table">
+                  <thead>
+                    <tr>
+                      <th>Time</th>
+                      <th>Tracking ID</th>
+                      <th>Courier Brand</th>
+                      <th>Weight</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="load-table-body">
+                    <!-- Loaded dynamically via app.js -->
+                  </tbody>
+                </table>
+                <div class="empty-state hidden" id="table-empty-state">
+                  <i data-lucide="inbox"></i>
+                  <p>No parcels logged matching filters. Start scanning above!</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- BULK IMPORT TAB -->
+        <section id="tab-bulk-import" class="tab-pane">
+          <div class="card">
+            <div class="card-header">
+              <h3><i data-lucide="file-text"></i> Bulk Tracking ID Import</h3>
+            </div>
+            <div class="card-body">
+              <p class="section-desc">Paste a list of Tracking IDs or barcodes from a text file, sheet, or invoice list. Paste one ID per line. The system will automatically detect the courier provider for each one.</p>
+              
+              <div class="bulk-form">
+                <div class="form-group">
+                  <label for="bulk-textarea">Paste Tracking Barcodes (One per line)</label>
+                  <textarea id="bulk-textarea" rows="12" placeholder="Example:&#10;129384729102&#10;D58392019&#10;30294857283&#10;EM987654321IN"></textarea>
+                </div>
+
+                <div class="manual-details-grid">
+                  <div class="form-group">
+                    <label for="bulk-courier-override">Force Courier Brand (Optional)</label>
+                    <select id="bulk-courier-override">
+                      <option value="auto">🔍 Auto-Detect Each Barcode</option>
+                      <option value="delhivery">Delhivery</option>
+                      <option value="dtdc">DTDC</option>
+                      <option value="bluedart">Blue Dart</option>
+                      <option value="speedpost">Speed Post</option>
+                      <option value="fedex">FedEx</option>
+                      <option value="dhl">DHL Express</option>
+                      <option value="other">Other / General</option>
+                    </select>
+                  </div>
+                  
+                  <div class="form-group">
+                    <label for="bulk-default-weight">Default Weight (kg)</label>
+                    <input type="number" id="bulk-default-weight" step="0.01" value="0.50" min="0">
+                  </div>
+                </div>
+
+                <div class="bulk-actions">
+                  <button class="btn btn-primary" id="btn-process-bulk">
+                    <i data-lucide="upload-cloud"></i> Process & Add to Load
+                  </button>
+                  <span id="bulk-process-status" class="status-msg"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- MANIFESTS TAB -->
+        <section id="tab-manifests" class="tab-pane">
+          <div class="grid-layout manifest-layout">
+            <!-- Left side: Setup manifest -->
+            <div class="card manifest-generator">
+              <div class="card-header">
+                <h3><i data-lucide="clipboard-paste"></i> Generate Manifest Receipt</h3>
+              </div>
+              <div class="card-body">
+                <p class="section-desc">Create a manifest sheet to hand over to the courier pickup driver. Select the brand, filter packages, and compile them into a printable sheet.</p>
+
+                <div class="form-group">
+                  <label for="manifest-courier-select">Courier Partner</label>
+                  <select id="manifest-courier-select">
+                    <option value="" disabled selected>Choose a courier brand...</option>
+                    <option value="delhivery">Delhivery</option>
+                    <option value="dtdc">DTDC</option>
+                    <option value="bluedart">Blue Dart</option>
+                    <option value="speedpost">Speed Post</option>
+                    <option value="fedex">FedEx</option>
+                    <option value="dhl">DHL Express</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="driver-name">Courier Driver Name / ID (Optional)</label>
+                  <input type="text" id="driver-name" placeholder="e.g. Ramesh Kumar (ID: 9845)">
+                </div>
+
+                <div class="manifest-selection-list">
+                  <div class="selection-header">
+                    <h4>Packages Available to Add (<span id="available-manifest-count">0</span>)</h4>
+                    <button class="link-btn" id="btn-select-all-manifest">Select All</button>
+                  </div>
+                  <div class="selection-box" id="manifest-packages-container">
+                    <!-- Populated dynamically based on courier select -->
+                    <div class="selection-placeholder">Please select a Courier Partner to list packages</div>
+                  </div>
+                </div>
+
+                <button class="btn btn-primary btn-block" id="btn-generate-manifest" disabled>
+                  <i data-lucide="printer"></i> Create & Print Manifest Sheet
+                </button>
+              </div>
+            </div>
+
+            <!-- Right side: Live Preview of current Manifest -->
+            <div class="card manifest-preview-card">
+              <div class="card-header">
+                <h3><i data-lucide="eye"></i> Manifest Print Preview</h3>
+              </div>
+              <div class="manifest-preview-scroll">
+                <div class="manifest-print-sheet" id="printable-manifest">
+                  <!-- Printable area styled by CSS print rules -->
+                  <div class="manifest-print-header">
+                    <div class="manifest-brand-info">
+                      <h2>JAIN COURIER MANIFEST (JCMS)</h2>
+                      <p><strong>Franchise:</strong> Jain Courier Services</p>
+                      <p><strong>Location:</strong> Delhi Hub (North-East)</p>
+                    </div>
+                    <div class="manifest-meta">
+                      <p><strong>Manifest ID:</strong> <span id="pm-id">MNF-20260707-001</span></p>
+                      <p><strong>Date:</strong> <span id="pm-date">July 7, 2026</span></p>
+                      <p><strong>Courier:</strong> <span id="pm-courier">Not Selected</span></p>
+                    </div>
+                  </div>
+
+                  <div class="manifest-driver-info">
+                    <p><strong>Pickup Driver:</strong> <span id="pm-driver">Pending Details</span></p>
+                  </div>
+
+                  <table class="manifest-print-table">
+                    <thead>
+                      <tr>
+                        <th style="width: 8%">S.No.</th>
+                        <th style="width: 32%">Tracking ID</th>
+                        <th style="width: 25%">Barcode</th>
+                        <th style="width: 15%">Weight</th>
+                        <th style="width: 20%">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody id="pm-table-body">
+                      <tr>
+                        <td colspan="5" style="text-align: center; padding: 20px; color: var(--text-muted)">
+                          No packages added to manifest preview. Select packages on the left.
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                  <div class="manifest-totals">
+                    <div class="total-item">
+                      <span>Total Parcels:</span>
+                      <strong id="pm-total-qty">0</strong>
+                    </div>
+                    <div class="total-item">
+                      <span>Total Weight:</span>
+                      <strong id="pm-total-wt">0.00 kg</strong>
+                    </div>
+                  </div>
+
+                  <div class="manifest-sign-section">
+                    <div class="sign-block">
+                      <div class="sign-line"></div>
+                      <span>Franchise Coordinator Signature</span>
+                    </div>
+                    <div class="sign-block">
+                      <div class="sign-line"></div>
+                      <span>Courier Driver Signature</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ANALYTICS TAB -->
+        <section id="tab-analytics" class="tab-pane">
+          <div class="analytics-grid">
+            <div class="card chart-card">
+              <div class="card-header">
+                <h3>Load Distribution (Count)</h3>
+              </div>
+              <div class="chart-container">
+                <canvas id="courier-count-chart"></canvas>
+              </div>
+            </div>
+            
+            <div class="card chart-card">
+              <div class="card-header">
+                <h3>Load Distribution (Weight)</h3>
+              </div>
+              <div class="chart-container">
+                <canvas id="courier-weight-chart"></canvas>
+              </div>
+            </div>
+
+            <div class="card breakdown-card">
+              <div class="card-header">
+                <h3>Courier Distribution Breakdown</h3>
+              </div>
+              <div class="table-container">
+                <table class="simple-table">
+                  <thead>
+                    <tr>
+                      <th>Courier Partner</th>
+                      <th>Total Packages</th>
+                      <th>Total Weight (kg)</th>
+                      <th>% Share</th>
+                    </tr>
+                  </thead>
+                  <tbody id="analytics-breakdown-body">
+                    <!-- Populated dynamically via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- MANAGE COURIERS TAB -->
+        <section id="tab-manage-couriers" class="tab-pane">
+          <div class="grid-layout">
+            <!-- Left Side: Add Custom Courier Form -->
+            <div class="card">
+              <div class="card-header">
+                <h3><i data-lucide="plus-circle"></i> Add Custom Courier</h3>
+              </div>
+              <div class="card-body">
+                <form id="add-courier-form">
+                  <div class="form-group">
+                    <label for="ac-name">Courier Brand Name</label>
+                    <input type="text" id="ac-name" required placeholder="e.g. Jain Express">
+                  </div>
+                  <div class="manual-details-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 16px;">
+                    <div class="form-group" style="margin-bottom:0;">
+                      <label for="ac-logo">Logo Emoji</label>
+                      <input type="text" id="ac-logo" required value="🚚" placeholder="Emoji e.g. 🚛">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                      <label for="ac-color">Brand Color</label>
+                      <div class="color-picker-wrapper" style="display:flex; gap: 10px; align-items:center; height: 44px;">
+                        <input type="color" id="ac-color" value="#6366f1" style="width: 44px; height: 100%; padding:0; cursor:pointer; border-radius:4px; border:1px solid var(--border-color);">
+                        <span id="color-hex" style="font-family: monospace; font-size:12px;">#6366f1</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="form-group" style="margin-top: 16px;">
+                    <label for="ac-regex">Tracking ID Regular Expression (Regex Pattern)</label>
+                    <input type="text" id="ac-regex" required placeholder="e.g. ^JN\d{8}$">
+                    <p class="field-hint" style="font-size:11px; color:var(--text-muted); margin-top:4px;">
+                      Examples: `^JN\d{8}$` (JN followed by 8 digits), `^\d{11}$` (11 digits)
+                    </p>
+                  </div>
+
+                  <!-- Regex Tester utility -->
+                  <div class="regex-tester-box" style="background-color: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; margin-bottom: 16px; margin-top:16px;">
+                    <h4 style="font-size:12px; margin-bottom:8px; display:flex; align-items:center; gap:6px;"><i data-lucide="check-square" style="width:14px; height:14px;"></i> Live Pattern Tester</h4>
+                    <div class="form-group" style="margin-bottom: 8px;">
+                      <input type="text" id="test-tracking-input" placeholder="Type a sample tracking number..." style="height:36px; font-size:13px; padding:6px 12px;">
+                    </div>
+                    <div id="test-regex-result" class="test-result-indicator" style="font-size:12px; font-weight:600; color:var(--text-muted);">
+                      Enter regex and sample ID to test
+                    </div>
+                  </div>
+
+                  <button type="submit" class="btn btn-primary btn-block">
+                    <i data-lucide="save"></i> Save Courier Partner
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            <!-- Right Side: List of Couriers -->
+            <div class="card">
+              <div class="card-header">
+                <h3><i data-lucide="settings-2"></i> Active Courier Partners</h3>
+                <button class="btn btn-secondary btn-sm" id="btn-reset-couriers" title="Restore default settings">
+                  Reset Defaults
+                </button>
+              </div>
+              <div class="table-container">
+                <table>
+                  <thead>
+                    <tr>
+                      <th style="width:15%">Logo</th>
+                      <th style="width:30%">Name</th>
+                      <th style="width:40%">Regex Pattern</th>
+                      <th style="width:15%">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="couriers-table-body">
+                    <!-- Populated dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Package Edit Modal -->
+  <div class="modal" id="edit-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Edit Package Details</h3>
+        <button class="modal-close" id="btn-close-modal"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="edit-index-id">
+        
+        <div class="form-group">
+          <label for="edit-tracking-id">Tracking ID</label>
+          <input type="text" id="edit-tracking-id" disabled class="disabled-input">
+        </div>
+
+        <div class="form-group">
+          <label for="edit-courier">Courier Partner</label>
+          <select id="edit-courier">
+            <option value="delhivery">Delhivery</option>
+            <option value="dtdc">DTDC</option>
+            <option value="bluedart">Blue Dart</option>
+            <option value="speedpost">Speed Post</option>
+            <option value="fedex">FedEx</option>
+            <option value="dhl">DHL Express</option>
+            <option value="other">Other / General</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="edit-weight">Weight (kg)</label>
+          <input type="number" id="edit-weight" step="0.01" min="0">
+        </div>
+
+        <div class="form-group">
+          <label for="edit-status">Status</label>
+          <select id="edit-status">
+            <option value="scanned">Scanned</option>
+            <option value="manifested">Manifested</option>
+            <option value="dispatched">Dispatched</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="edit-notes">Notes</label>
+          <input type="text" id="edit-notes" placeholder="Add package comments...">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="btn-cancel-edit">Cancel</button>
+        <button class="btn btn-primary" id="btn-save-edit">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JS references -->
+  <script src="mock-data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
